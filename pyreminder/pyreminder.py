@@ -1,4 +1,4 @@
-import re, os, yaml, requests, json, string, pytz, hashlib
+import re, os, yaml, requests, json, string, pytz, hashlib, dateutil.parser
 from datetime import datetime
 from babel.dates import format_timedelta
 
@@ -97,7 +97,7 @@ class TemplateManager:
     def getTemplate(self, template_name):
         if template_name in self.templates:
             return self.templates[template_name]
-        raise Exception(f"No such template: {template_name}")
+        return Template(template_name)
 
 class StateManager:
     def __init__(self, d):
@@ -135,7 +135,7 @@ class GitHub_Source:
 
         self.state_key = f"github:({self.owner},{self.repo}))"
 
-    def check(self, debug):
+    def check(self, force=False):
         url = f"https://api.github.com/repos/{self.owner}/{self.repo}/releases/latest"
         j = json.loads(requests.get(url).content)
         tag = j["tag_name"]
@@ -145,12 +145,12 @@ class GitHub_Source:
 
         data =  {
             "tag": tag,
-            "published_at": format_timedelta(datetime.fromisoformat(published_at) - datetime.now(pytz.utc), add_direction=True),
+            "published_at": format_timedelta(dateutil.parser.isoparse(published_at) - datetime.now(pytz.utc), add_direction=True),
             "body": j["body"],
             "url": f"https://github.com/{self.owner}/{self.repo}/releases/tag/{tag}"
         }
 
-        if debug:
+        if force:
             return (True, data)
 
         oldState = self.state_manager.getState(self.state_key)
@@ -175,36 +175,46 @@ class DockerHub_Source:
 
         self.state_key = f"docker-hub:({self.namespace},{self.repo},{self.tag})"
 
-    def check(self, debug=False):
+    def check(self, force=False):
         url = f"https://hub.docker.com/v2/namespaces/{self.namespace}/repositories/{self.repo}/tags/{self.tag}"
         j = json.loads(requests.get(url).content)
-        last_updated = j["last_updated"]
+        last_updated = j["tag_last_pushed"]
         key = (last_updated)
         hsh = int(hashlib.md5(str(key).encode('utf-8')).hexdigest(), 16)
+        last_updated_datetime = dateutil.parser.isoparse(last_updated)
 
         image = f"{self.namespace}/{self.repo}:{self.tag}"
         if self.namespace == 'library': # docker official image
             image = f"{self.repo}:{self.tag}"
         data =  {
-            "last_updated": format_timedelta(datetime.fromisoformat(last_updated) - datetime.now(pytz.utc), add_direction=True),
-            "image": image
+            "last_updated": format_timedelta(last_updated_datetime - datetime.now(pytz.utc), add_direction=True),
+            "image": image,
+            "version": self.tag
         }
 
-        if debug:
-            return (True, data)
+        trigger = True
 
-        oldState = self.state_manager.getState(self.state_key)
-        if oldState is not None:
-            if oldState['hash'] == hsh:
-                return (False, None)
+        if not force:
+            oldState = self.state_manager.getState(self.state_key)
+            if oldState is not None:
+                if oldState['hash'] == hsh:
+                    trigger = False
+            if trigger:
+                newState = { "hash": hsh }
+                self.state_manager.setState(self.state_key, newState)
 
-        newState = {
-            "hash": hsh
-        }
-        self.state_manager.setState(self.state_key, newState)
-        return (True, data)
+        if trigger:
+            tags_url = f"https://hub.docker.com/v2/namespaces/{self.namespace}/repositories/{self.repo}/tags?page_size=20"
+            j = json.loads(requests.get(tags_url).content)
+            version_re = re.compile(r"^((?:[0-9]+\.?)+)$")
+            for res in j['results']:
+                ts = dateutil.parser.isoparse(res['tag_last_pushed'])
+                if abs((ts - last_updated_datetime).total_seconds()) > 10:
+                    if version_re.match(res['name']):
+                        data['version']  = res['name']
+                        break
 
-
+        return (trigger, data)
 
 # destinations
 class Console_Destination:

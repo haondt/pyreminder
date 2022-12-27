@@ -22,3 +22,4 @@ docker-hub source:
 |---|---|
 | `last_updated` | how long ago the release was updated |
 | `image` | name of the docker image |
+| `version` | the most recent numeric image that was released at the same time as the source release (probably the updated version) |

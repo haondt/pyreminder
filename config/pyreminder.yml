@@ -14,7 +14,6 @@ checks:
         name: "Lidarr"
       period: 15s
       debug: true
-
   - varken:
       source:
           type: docker-hub
@@ -24,9 +23,8 @@ checks:
       destinations:
         - type: discord
           webhookURL: ${PYREMINDER_DISCORD_WEBHOOK_URL}
+          template: "New version of `${image}` pushed ${last_updated}."
         - type: console
-      meta:
-        name: "Varken"
       period: 20s
       debug: true
   - telegraf:
@@ -42,9 +40,26 @@ checks:
         name: "Telegraf"
       period: 20s
       debug: true
+  - portainer:
+      source:
+          type: docker-hub
+          namespace: portainer
+          repository: portainer-ce
+          tag: latest
+      destinations:
+        - type: discord
+          webhookURL: ${PYREMINDER_DISCORD_WEBHOOK_URL}
+          template: docker-hub-discord
+      meta:
+        name: "Portainer"
+      period: 20s
+      debug: true
 
 templates:
   github-discord: |
     Version ${tag} of ${meta__name} has been released! Download now!!!
     get it [here](${url})
     brought to you via check ${check__name}
+  docker-hub-discord: |
+    Version $version of $meta__name was released ${last_updated}!
+    Get it by pulling the latest version of `${image}`
