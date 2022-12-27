@@ -1,0 +1,35 @@
+checks:
+  - lidarr:
+      source:
+        github:
+          owner: Lidarr
+          repo: Lidarr
+      destinations:
+        - discord:
+            webhookURL: ${PYREMINDER_DISCORD_WEBHOOK_URL}
+            template: github-discord
+        - console:
+            template: github-discord
+      meta:
+        name: "Lidarr"
+      period: 15s
+
+  - varken:
+      source:
+        docker-hub:
+          namespace: boerderij
+          repository: varken
+          tag: develop
+      destinations:
+        - discord:
+            webhookURL: ${PYREMINDER_DISCORD_WEBHOOK_URL}
+        - console:
+      meta:
+        name: "Varken"
+      period: 20s
+      debug: true
+
+templates:
+  github-discord: |
+    Version ${tag} of ${meta__name} has been released! Download now!!!
+    brought to you via check ${check__name}

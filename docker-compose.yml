@@ -1,0 +1,13 @@
+version: '3'
+services:
+  pyreminder:
+    build:
+      context: .
+    container_name: pyreminder
+    volumes:
+      - ./config/pyreminder.yml:/config/pyreminder.yml
+      - pyreminder_data:/data
+    env_file:
+      - ./config/.env
+volumes:
+  pyreminder_data:
