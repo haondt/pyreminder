@@ -263,7 +263,14 @@ class Discord_Destination:
             self.template = template_manager.getTemplate(config['template'])
 
     def send(self, data):
-        message = { "content": self.template.render(data)}
+        message = {
+            "embeds": [
+                {
+                    "type": "rich",
+                    "description": self.template.render(data)
+                }
+            ]
+        }
         requests.post(self.url, json=message)
 
 # main worker

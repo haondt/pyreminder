@@ -71,7 +71,7 @@ checks:
 
 templates:
   github-discord: |
-    Version ${tag} of ${meta__name} has been released! Download now!!!
+    Version ${github__tag} of ${meta__name} has been released! Download now!!!
     get it [here](${github__url})
     brought to you via check ${check__name}
   docker-hub-discord: |
