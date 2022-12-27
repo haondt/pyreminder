@@ -143,12 +143,15 @@ class GitHub_Source:
         key = (tag, published_at)
         hsh = int(hashlib.md5(str(key).encode('utf-8')).hexdigest(), 16)
 
+        data =  {
+            "tag": tag,
+            "published_at": format_timedelta(datetime.fromisoformat(published_at) - datetime.now(pytz.utc), add_direction=True),
+            "body": j["body"],
+            "url": f"https://github.com/{self.owner}/{self.repo}/releases/tag/{tag}"
+        }
+
         if debug:
-            return (True, {
-                "tag": tag,
-                "published_at": format_timedelta(datetime.fromisoformat(published_at) - datetime.now(pytz.utc), add_direction=True),
-                "body": j["body"]
-            })
+            return (True, data)
 
         oldState = self.state_manager.getState(self.state_key)
         if oldState is not None:
@@ -159,16 +162,14 @@ class GitHub_Source:
             "hash": hsh
         }
         self.state_manager.setState(self.state_key, newState)
-        return (True, {
-            "tag": tag,
-            "published_at": format_timedelta(datetime.fromisoformat(published_at) - datetime.now(pytz.utc), add_direction=True),
-            "body": j["body"]
-        })
+        return (True, data)
 
 class DockerHub_Source:
     def __init__(self, state_manager, config):
         self.state_manager = state_manager
-        self.namespace = config['namespace']
+        self.namespace = 'library'
+        if 'namespace' in config:
+            self.namespace = config['namespace']
         self.repo = config['repository']
         self.tag = config['tag']
 
@@ -181,10 +182,16 @@ class DockerHub_Source:
         key = (last_updated)
         hsh = int(hashlib.md5(str(key).encode('utf-8')).hexdigest(), 16)
 
+        image = f"{self.namespace}/{self.repo}:{self.tag}"
+        if self.namespace == 'library': # docker official image
+            image = f"{self.repo}:{self.tag}"
+        data =  {
+            "last_updated": format_timedelta(datetime.fromisoformat(last_updated) - datetime.now(pytz.utc), add_direction=True),
+            "image": image
+        }
+
         if debug:
-            return (True, {
-                "last_updated": format_timedelta(datetime.fromisoformat(last_updated) - datetime.now(pytz.utc), add_direction=True),
-            })
+            return (True, data)
 
         oldState = self.state_manager.getState(self.state_key)
         if oldState is not None:
@@ -195,9 +202,7 @@ class DockerHub_Source:
             "hash": hsh
         }
         self.state_manager.setState(self.state_key, newState)
-        return (True, {
-            "last_updated": format_timedelta(datetime.fromisoformat(last_updated) - datetime.now(pytz.utc), add_direction=True),
-        })
+        return (True, data)
 
 
 

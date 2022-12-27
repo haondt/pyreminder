@@ -15,8 +15,10 @@ github source:
 | `tag` | the associated tag |
 | `published_at` | how long ago the release was published|
 | `body` | the body of the release message |
+| `url` | the url of the release page |
 
 docker-hub source:
 | | |
 |---|---|
 | `last_updated` | how long ago the release was updated |
+| `image` | name of the docker image |

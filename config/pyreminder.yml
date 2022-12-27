@@ -13,6 +13,7 @@ checks:
       meta:
         name: "Lidarr"
       period: 15s
+      debug: true
 
   - varken:
       source:
@@ -28,8 +29,22 @@ checks:
         name: "Varken"
       period: 20s
       debug: true
+  - telegraf:
+      source:
+          type: docker-hub
+          repository: telegraf
+          tag: latest
+      destinations:
+        - type: discord
+          webhookURL: ${PYREMINDER_DISCORD_WEBHOOK_URL}
+        - type: console
+      meta:
+        name: "Telegraf"
+      period: 20s
+      debug: true
 
 templates:
   github-discord: |
     Version ${tag} of ${meta__name} has been released! Download now!!!
+    get it [here](${url})
     brought to you via check ${check__name}
