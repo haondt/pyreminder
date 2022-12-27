@@ -23,8 +23,22 @@ checks:
       destinations:
         - type: discord
           webhookURL: ${PYREMINDER_DISCORD_WEBHOOK_URL}
-          template: "New version of `${image}` pushed ${last_updated}."
+          template: "New version of `${docker_hub__image}` pushed ${docker_hub__last_updated}."
         - type: console
+      period: 20s
+      debug: true
+  - plex:
+      source:
+          type: docker-hub
+          namespace: linuxserver
+          repository: plex
+          tag: latest
+      enrichments:
+        - type: plex
+      destinations:
+        - type: discord
+          webhookURL: ${PYREMINDER_DISCORD_WEBHOOK_URL}
+          template: "New version of Plex pushed ${docker_hub__last_updated}. Get it [here](${plex__url})"
       period: 20s
       debug: true
   - telegraf:
@@ -58,8 +72,8 @@ checks:
 templates:
   github-discord: |
     Version ${tag} of ${meta__name} has been released! Download now!!!
-    get it [here](${url})
+    get it [here](${github__url})
     brought to you via check ${check__name}
   docker-hub-discord: |
-    Version $version of $meta__name was released ${last_updated}!
-    Get it by pulling the latest version of `${image}`
+    Version $docker_hub__version of $meta__name was released ${docker_hub__last_updated}!
+    Get it by pulling the latest version of `${docker_hub__image}`
