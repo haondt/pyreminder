@@ -16,12 +16,9 @@ class Check:
         if 'debug' in data:
             self.debug = data['debug']
 
-        sourceType = next(iter(data['source']))
-        self.source = sourceFactory.Create(sourceType, data['source'][sourceType])
-        self.destinations = []
-        for destination in data['destinations']:
-            destinationType = next(iter(destination))
-            self.destinations.append(destinationFactory.Create(destinationType, destination[destinationType]))
+        self.source = sourceFactory.Create(data['source'])
+        self.destinations = [destinationFactory.Create(d) for d in data['destinations']]
+
     def _enrich(self, data):
         for k in self.meta:
             data["meta__" + k] = self.meta[k]
@@ -48,8 +45,8 @@ class SourceFactory:
     def __init__(self, state_manager):
         self.state_manager = state_manager
 
-    def Create(self, sourceType, config):
-        config = config or {}
+    def Create(self, config):
+        sourceType = config['type']
         if sourceType == 'github':
             return GitHub_Source(self.state_manager, config)
         elif sourceType == 'docker-hub':
@@ -61,8 +58,9 @@ class DestinationFactory:
     def __init__(self, template_manager):
         self.template_manager = template_manager
 
-    def Create(self, destinationType, config):
+    def Create(self, config):
         config = config or {}
+        destinationType = config['type']
         if destinationType == 'console':
             return Console_Destination(self.template_manager, config)
         elif destinationType == 'discord':

@@ -1,29 +1,29 @@
 checks:
   - lidarr:
       source:
-        github:
+          type: github
           owner: Lidarr
           repo: Lidarr
       destinations:
-        - discord:
-            webhookURL: ${PYREMINDER_DISCORD_WEBHOOK_URL}
-            template: github-discord
-        - console:
-            template: github-discord
+        - type: discord
+          webhookURL: ${PYREMINDER_DISCORD_WEBHOOK_URL}
+          template: github-discord
+        - type: console
+          template: github-discord
       meta:
         name: "Lidarr"
       period: 15s
 
   - varken:
       source:
-        docker-hub:
+          type: docker-hub
           namespace: boerderij
           repository: varken
           tag: develop
       destinations:
-        - discord:
-            webhookURL: ${PYREMINDER_DISCORD_WEBHOOK_URL}
-        - console:
+        - type: discord
+          webhookURL: ${PYREMINDER_DISCORD_WEBHOOK_URL}
+        - type: console
       meta:
         name: "Varken"
       period: 20s
