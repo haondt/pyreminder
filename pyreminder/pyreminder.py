@@ -16,12 +16,18 @@ class Check:
         if 'debug' in data:
             self.debug = data['debug']
 
+        self.enrichments = []
+        if 'enrichments' in data:
+            self.enrichments = [sourceFactory.Create(s) for s in data['enrichments']]
+
         self.source = sourceFactory.Create(data['source'])
         self.destinations = [destinationFactory.Create(d) for d in data['destinations']]
 
     def _enrich(self, data):
         for k in self.meta:
             data["meta__" + k] = self.meta[k]
+        for e in self.enrichments:
+            data = e.enrich(data)
         data['check__name'] = self.name
         return data
 
@@ -51,6 +57,8 @@ class SourceFactory:
             return GitHub_Source(self.state_manager, config)
         elif sourceType == 'docker-hub':
             return DockerHub_Source(self.state_manager, config)
+        elif sourceType == 'plex':
+            return Plex_Source(self.state_manager, config)
         else:
             raise Exception(f"No such source: {sourceType}")
 
@@ -135,6 +143,12 @@ class GitHub_Source:
 
         self.state_key = f"github:({self.owner},{self.repo}))"
 
+    def enrich(self, data):
+        _, e = self.check(True)
+        for k in e:
+            data[k] = e[k]
+        return data
+
     def check(self, force=False):
         url = f"https://api.github.com/repos/{self.owner}/{self.repo}/releases/latest"
         j = json.loads(requests.get(url).content)
@@ -144,10 +158,10 @@ class GitHub_Source:
         hsh = int(hashlib.md5(str(key).encode('utf-8')).hexdigest(), 16)
 
         data =  {
-            "tag": tag,
-            "published_at": format_timedelta(dateutil.parser.isoparse(published_at) - datetime.now(pytz.utc), add_direction=True),
-            "body": j["body"],
-            "url": f"https://github.com/{self.owner}/{self.repo}/releases/tag/{tag}"
+            "github__tag": tag,
+            "github__published_at": format_timedelta(dateutil.parser.isoparse(published_at) - datetime.now(pytz.utc), add_direction=True),
+            "github__body": j["body"],
+            "github__url": f"https://github.com/{self.owner}/{self.repo}/releases/tag/{tag}"
         }
 
         if force:
@@ -175,6 +189,12 @@ class DockerHub_Source:
 
         self.state_key = f"docker-hub:({self.namespace},{self.repo},{self.tag})"
 
+    def enrich(self, data):
+        _, e = self.check(True)
+        for k in e:
+            data[k] = e[k]
+        return data
+
     def check(self, force=False):
         url = f"https://hub.docker.com/v2/namespaces/{self.namespace}/repositories/{self.repo}/tags/{self.tag}"
         j = json.loads(requests.get(url).content)
@@ -187,9 +207,9 @@ class DockerHub_Source:
         if self.namespace == 'library': # docker official image
             image = f"{self.repo}:{self.tag}"
         data =  {
-            "last_updated": format_timedelta(last_updated_datetime - datetime.now(pytz.utc), add_direction=True),
-            "image": image,
-            "version": self.tag
+            "docker_hub__last_updated": format_timedelta(last_updated_datetime - datetime.now(pytz.utc), add_direction=True),
+            "docker_hub__image": image,
+            "docker_hub__version": self.tag
         }
 
         trigger = True
@@ -211,10 +231,19 @@ class DockerHub_Source:
                 ts = dateutil.parser.isoparse(res['tag_last_pushed'])
                 if abs((ts - last_updated_datetime).total_seconds()) > 10:
                     if version_re.match(res['name']):
-                        data['version']  = res['name']
+                        data['docker_hub__version']  = res['name']
                         break
 
         return (trigger, data)
+
+class Plex_Source:
+    def __init__(self, state_manager, config):
+        pass
+    def check(self, force=False):
+        return (force, None)
+    def enrich(self, data):
+        data["plex__url"] = "https://www.plex.tv/media-server-downloads/"
+        return data
 
 # destinations
 class Console_Destination:
