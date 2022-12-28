@@ -1,9 +1,9 @@
 checks:
   - lidarr:
       source:
-          type: github
-          owner: Lidarr
-          repo: Lidarr
+        type: github
+        owner: Lidarr
+        repo: Lidarr
       destinations:
         - type: discord
           webhookURL: ${PYREMINDER_DISCORD_WEBHOOK_URL}
@@ -13,13 +13,13 @@ checks:
       meta:
         name: "Lidarr"
       period: 5s
-      debug: false
+      debug: true
   - varken:
       source:
-          type: docker-hub
-          namespace: boerderij
-          repository: varken
-          tag: develop
+        type: docker-hub
+        namespace: boerderij
+        repository: varken
+        tag: develop
       destinations:
         - type: discord
           webhookURL: ${PYREMINDER_DISCORD_WEBHOOK_URL}
@@ -28,10 +28,10 @@ checks:
       period: 20s
   - plex:
       source:
-          type: docker-hub
-          namespace: linuxserver
-          repository: plex
-          tag: latest
+        type: docker-hub
+        namespace: linuxserver
+        repository: plex
+        tag: latest
       destinations:
         - type: discord
           webhookURL: ${PYREMINDER_DISCORD_WEBHOOK_URL}
@@ -42,9 +42,9 @@ checks:
       period: 20s
   - telegraf:
       source:
-          type: docker-hub
-          repository: telegraf
-          tag: latest
+        type: docker-hub
+        repository: telegraf
+        tag: latest
       destinations:
         - type: discord
           webhookURL: ${PYREMINDER_DISCORD_WEBHOOK_URL}
@@ -54,10 +54,10 @@ checks:
       period: 20s
   - portainer:
       source:
-          type: docker-hub
-          namespace: portainer
-          repository: portainer-ce
-          tag: latest
+        type: docker-hub
+        namespace: portainer
+        repository: portainer-ce
+        tag: latest
       destinations:
         - type: discord
           webhookURL: ${PYREMINDER_DISCORD_WEBHOOK_URL}
