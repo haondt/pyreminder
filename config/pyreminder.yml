@@ -35,6 +35,7 @@ checks:
       destinations:
         - type: discord
           webhookURL: ${PYREMINDER_DISCORD_WEBHOOK_URL}
+          color: 1ABC9C
           template: "New version of Plex pushed ${docker_hub__last_updated}. Get it [here](${meta__plex_url})"
       meta:
         plex_url: ${PYREMINDER_PLEX_URL}

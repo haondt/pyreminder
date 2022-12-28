@@ -304,6 +304,9 @@ class Discord_Destination:
         self.template = StringTemplate()
         if "template" in config:
             self.template = template_manager.getTemplate(config['template'])
+        self.color = None
+        if "color" in config:
+            self.color = int(config['color'], 16)
 
     def send(self, data):
         message = {
@@ -314,6 +317,9 @@ class Discord_Destination:
                 }
             ]
         }
+
+        if self.color is not None:
+            message['embeds'][0]['color'] = self.color
         requests.post(self.url, json=message)
 
 # main worker
