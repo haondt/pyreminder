@@ -28,4 +28,4 @@ jobs:
         with:
           context: .
           push: true
-          tags: haumea/pyreminder:latest,haumea/pyreminder:$VERSION
+          tags: haumea/pyreminder:latest,haumea/pyreminder:${VERSION}
