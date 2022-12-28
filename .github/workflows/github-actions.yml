@@ -4,7 +4,9 @@ on:
     types: [published]
     tags: ['v*.*.*']
   workflow_dispatch:
-    tags: ['v*.*.*']
+    release:
+      required: true
+      type: release
 
 jobs:
   docker:
