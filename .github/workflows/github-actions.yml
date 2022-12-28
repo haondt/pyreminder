@@ -31,4 +31,5 @@ jobs:
         with:
           context: .
           push: true
-          tags: haumea/pyreminder:latest,haumea/pyreminder:${VERSION}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
