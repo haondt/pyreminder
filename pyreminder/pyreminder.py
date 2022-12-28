@@ -194,6 +194,11 @@ class GitHub_Source:
     def check(self, force=False):
         url = f"https://api.github.com/repos/{self.owner}/{self.repo}/releases/latest"
         j = json.loads(requests.get(url).content)
+
+        for k in ["tag_name", "published_at"]:
+            if k not in j:
+                raise Exception(f"missing key {k} in response from url {url}")
+
         tag = j["tag_name"]
         published_at = j["published_at"]
         key = (tag, published_at)
@@ -240,6 +245,11 @@ class DockerHub_Source:
     def check(self, force=False):
         url = f"https://hub.docker.com/v2/namespaces/{self.namespace}/repositories/{self.repo}/tags/{self.tag}"
         j = json.loads(requests.get(url).content)
+
+        for k in ["tag_last_pushed"]:
+            if k not in j:
+                raise Exception(f"missing key {k} in response from url {url}")
+
         last_updated = j["tag_last_pushed"]
         key = (last_updated)
         hsh = int(hashlib.md5(str(key).encode('utf-8')).hexdigest(), 16)
