@@ -1,6 +1,7 @@
 import re, os, yaml, requests, json, string, pytz, hashlib, dateutil.parser
 from datetime import datetime
-from babel.dates import format_timedelta
+from babel.dates import format_timedelta, format_time, format_datetime, get_timezone
+from babel.dates import UTC as tz_UTC
 
 
 
@@ -57,6 +58,10 @@ class SourceFactory:
             return GitHub_Source(self.state_manager, config)
         elif sourceType == 'docker-hub':
             return DockerHub_Source(self.state_manager, config)
+        elif sourceType == 'reminder':
+            return Reminder_Source(self.state_manager, config)
+        elif sourceType == 'datetime':
+            return DateTime_Source(self.state_manager, config)
         else:
             raise Exception(f"No such source: {sourceType}")
 
@@ -133,6 +138,36 @@ class StateManager:
         self._setState(j)
 
 # sources
+class DateTime_Source:
+    def __init__(self, state_manager, config):
+        self.tz = tz_UTC
+        if 'tz' in config:
+            self.tz = get_timezone(config['tz'])
+
+        self.format = None
+        if 'format' in config:
+            self.format = config['format']
+    def enrich(self, data):
+        now = datetime.utcnow()
+        data['datetime__date_short'] = format_datetime(now, format='yyyy/MM/dd', tzinfo=self.tz, locale='en')
+        data['datetime__date_long'] = format_datetime(now, format='MMMM d, yyyy', tzinfo=self.tz, locale='en')
+        data['datetime__date_full'] = format_datetime(now, format='EEEE, MMMM d, yyyy', tzinfo=self.tz, locale='en')
+        data['datetime__time_short'] = format_time(now, format='h:mm a', tzinfo=self.tz, locale='en')
+        data['datetime__time_long'] = format_time(now, format='h:mm:SS a', tzinfo=self.tz, locale='en')
+        data['datetime__posix'] = now.timestamp()
+        data['datetime__formatted'] = format_datetime(now, format=self.format, tzinfo=self.tz, locale='en')
+        return data
+    def check(self, force=False):
+        return (False, None)
+
+class Reminder_Source:
+    def __init__(self, state_manager, config):
+        pass
+    def enrich(self, data):
+        return data
+    def check(self, force=False):
+        return (True, {})
+
 class GitHub_Source:
     def __init__(self, state_manager, config):
         self.state_manager = state_manager

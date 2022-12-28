@@ -68,6 +68,17 @@ checks:
         name: "Portainer"
       period: 20s
       debug: true
+  - reminder:
+      source:
+        type: reminder
+      enrichments:
+        - type: datetime
+          tz: America/Edmonton
+          format: d M y
+      destinations:
+        - type: console
+          template: datetime
+      period: 30s
 
 templates:
   github-discord: |
@@ -77,3 +88,11 @@ templates:
   docker-hub-discord: |
     Version $docker_hub__version of $meta__name was released ${docker_hub__last_updated}!
     Get it by pulling the latest version of `${docker_hub__image}`
+  datetime: |
+    datetime__date_short: ${datetime__date_short}
+    datetime__date_long: ${datetime__date_long}
+    datetime__date_full: ${datetime__date_full}
+    datetime__time_short: ${datetime__time_short}
+    datetime__time_long: ${datetime__time_long}
+    datetime__posix: ${datetime__posix}
+    datetime__formatted: ${datetime__formatted}
