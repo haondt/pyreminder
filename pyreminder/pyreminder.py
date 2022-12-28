@@ -57,8 +57,6 @@ class SourceFactory:
             return GitHub_Source(self.state_manager, config)
         elif sourceType == 'docker-hub':
             return DockerHub_Source(self.state_manager, config)
-        elif sourceType == 'plex':
-            return Plex_Source(self.state_manager, config)
         else:
             raise Exception(f"No such source: {sourceType}")
 
@@ -235,15 +233,6 @@ class DockerHub_Source:
                         break
 
         return (trigger, data)
-
-class Plex_Source:
-    def __init__(self, state_manager, config):
-        pass
-    def check(self, force=False):
-        return (force, None)
-    def enrich(self, data):
-        data["plex__url"] = "https://www.plex.tv/media-server-downloads/"
-        return data
 
 # destinations
 class Console_Destination:

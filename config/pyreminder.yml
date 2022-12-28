@@ -33,12 +33,12 @@ checks:
           namespace: linuxserver
           repository: plex
           tag: latest
-      enrichments:
-        - type: plex
       destinations:
         - type: discord
           webhookURL: ${PYREMINDER_DISCORD_WEBHOOK_URL}
-          template: "New version of Plex pushed ${docker_hub__last_updated}. Get it [here](${plex__url})"
+          template: "New version of Plex pushed ${docker_hub__last_updated}. Get it [here](${meta__plex_url})"
+      meta:
+        plex_url: ${PYREMINDER_PLEX_URL}
       period: 20s
       debug: true
   - telegraf:
