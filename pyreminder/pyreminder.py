@@ -1,5 +1,5 @@
-import re, os, yaml, requests, json, string, pytz, hashlib, dateutil.parser
-from datetime import datetime
+import re, os, yaml, requests, json, string, pytz, hashlib, dateutil.parser, sched, time
+from datetime import datetime, timedelta
 from babel.dates import format_timedelta, format_time, format_datetime, get_timezone
 from babel.dates import UTC as tz_UTC
 
@@ -23,6 +23,15 @@ class Check:
 
         self.source = sourceFactory.Create(data['source'])
         self.destinations = [destinationFactory.Create(d) for d in data['destinations']]
+
+        time_re = re.compile(r"^(?:(?P<d>[0-9]+)d)?(?:(?P<h>[0-9]+)h)?(?:(?P<m>[0-9]+)m)?(?:(?P<s>[0-9]+)s)?$")
+        gd = time_re.match(data['period']).groupdict()
+        self.period = timedelta(
+            days=int(gd['d'] or 0),
+            hours=int(gd['h'] or 0),
+            minutes=int(gd['m'] or 0),
+            seconds=int(gd['s'] or 0)
+        )
 
     def _enrich(self, data):
         for k in self.meta:
@@ -298,7 +307,7 @@ class Discord_Destination:
         requests.post(self.url, json=message)
 
 # main worker
-class Main:
+class Scheduler:
     def __init__(self, data_dir, config):
         stateManager = StateManager(data_dir)
         sourceFactory = SourceFactory(stateManager)
@@ -311,33 +320,49 @@ class Main:
             check_name = next(iter(check))
             self.checks.append(checkFactory.Create(check_name, check[check_name] ))
 
-    def run(self):
+        self.scheduler = sched.scheduler(time.time, time.sleep)
+
         for check in self.checks:
-            check.check()
+            self.runCheckAndReschedule(check)
+
+    def runCheckAndReschedule(self, check):
+        check.check()
+        self.scheduler.enter(check.period.total_seconds(), 1, self.runCheckAndReschedule, (check,))
+
+    def run(self):
+        self.scheduler.run()
+
+class ConfigLoader:
+    def __init__(self, config_file):
+        self.config_file = config_file
+        self.env_var_re = re.compile(r"\$\{([^}^{]+)\}")
+
+    def path_constructor(self, loader, node):
+        value = node.value
+        match = self.env_var_re.match(value)
+        env_var = match.group()[2:-1]
+        if os.environ.get(env_var) is None:
+            raise Exception(f"Missing environment variable \"{env_var}\"")
+        return os.environ.get(env_var) + value[match.end():]
+
+    def loadConfig(self):
+        yaml.add_implicit_resolver('!path', self.env_var_re)
+        yaml.add_constructor('!path', lambda l, n: self.path_constructor(l, n))
+
+        app_config = None
+        with open(self.config_file) as f:
+            s = f.read()
+            app_config = yaml.load(s, Loader=yaml.FullLoader)
+
+        return app_config
+
 
 
 # do work
-config_file = "/config/pyreminder.yml"
 data_dir = "/data"
+config_file = "/config/pyreminder.yml"
 
-time_re = re.compile(r"^(?:(?P<d>[0-9]+)d)?(?:(?P<h>[0-9]+)h)?(?:(?P<m>[0-9]+)m)?(?:(?P<s>[0-9]+)s)?$")
-env_var_re = re.compile(r"\$\{([^}^{]+)\}")
+configLoader = ConfigLoader(config_file)
+scheduler = Scheduler(data_dir, configLoader.loadConfig())
 
-def path_constructor(loader, node):
-    value = node.value
-    match = env_var_re.match(value)
-    env_var = match.group()[2:-1]
-    if os.environ.get(env_var) is None:
-        raise Exception(f"Missing environment variable \"{env_var}\"")
-    return os.environ.get(env_var) + value[match.end():]
-
-yaml.add_implicit_resolver('!path', env_var_re)
-yaml.add_constructor('!path', path_constructor)
-
-app_config = None
-with open(config_file) as f:
-    s = f.read()
-    app_config = yaml.load(s, Loader=yaml.FullLoader)
-
-main = Main(data_dir, app_config)
-main.run()
+scheduler.run()
