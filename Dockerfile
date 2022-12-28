@@ -5,4 +5,4 @@ COPY ./pyreminder/requirements.txt /app
 RUN pip install -r requirements.txt
 COPY ./pyreminder/pyreminder.py .
 
-CMD python3 pyreminder.py && tail -f /dev/null
+CMD ["python3", "-u", "pyreminder.py"]

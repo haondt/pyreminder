@@ -4,7 +4,6 @@ from babel.dates import format_timedelta, format_time, format_datetime, get_time
 from babel.dates import UTC as tz_UTC
 
 
-
 # check
 class Check:
     def __init__(self, name, data, sourceFactory, destinationFactory):
@@ -164,7 +163,8 @@ class DateTime_Source:
         data['datetime__time_short'] = format_time(now, format='h:mm a', tzinfo=self.tz, locale='en')
         data['datetime__time_long'] = format_time(now, format='h:mm:SS a', tzinfo=self.tz, locale='en')
         data['datetime__posix'] = now.timestamp()
-        data['datetime__formatted'] = format_datetime(now, format=self.format, tzinfo=self.tz, locale='en')
+        if self.format is not None:
+            data['datetime__formatted'] = format_datetime(now, format=self.format, tzinfo=self.tz, locale='en')
         return data
     def check(self, force=False):
         return (False, None)
