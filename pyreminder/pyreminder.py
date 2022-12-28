@@ -321,7 +321,7 @@ class Scheduler:
     def __init__(self, data_dir, config):
         stateManager = StateManager(data_dir)
         sourceFactory = SourceFactory(stateManager)
-        templateManager = TemplateManager(config['templates'])
+        templateManager = TemplateManager(config['templates'] if 'templates' in config else [])
         destinationFactory = DestinationFactory(templateManager)
         checkFactory = CheckFactory(sourceFactory, destinationFactory)
 
