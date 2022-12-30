@@ -4,6 +4,22 @@
 [![GitHub release (latest by date)](https://img.shields.io/github/v/release/haondt/pyreminder)](https://github.com/haondt/pyreminder/releases/latest)
 
 
-pyreminder is a dead-simple tool for checking statuses and sending notifications. Inspired by [Kibitzr](https://kibitzr.github.io/) but meant to be simpler.
+pyreminder is a dead-simple tool for checking statuses and sending notifications. Inspired by [Kibitzr](https://kibitzr.github.io/) but meant to be simpler. Pyreminder is configured with a single yaml file:
+```yaml
+checks:
+  - dockerhub:
+      source:
+        type: docker-hub
+        namespace: haumea
+        repository: pyreminder
+        tag: latest
+      destinations:
+        - type: discord
+          webhookURL: ${PYREMINDER_DISCORD_WEBHOOK_URL}
+          color: 1ABC9C
+          template: "Hooray! A new version of `${docker_hub__image}` was just released!"
+      period: 1d
+```
+![image](https://user-images.githubusercontent.com/19233365/210116896-3c4c4dea-85f5-46a0-8934-38e13ebf56bb.png)
 
-Check the [wiki](https://github.com/haondt/pyreminder/wiki/Installation) for examples and instructions.
+Check the [wiki](https://github.com/haondt/pyreminder/wiki/Installation) to get started.
