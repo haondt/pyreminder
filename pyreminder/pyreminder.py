@@ -2,6 +2,7 @@ import re, os, yaml, requests, json, string, pytz, hashlib, dateutil.parser, sch
 from datetime import datetime, timedelta
 from babel.dates import format_timedelta, format_time, format_datetime, get_timezone
 from babel.dates import UTC as tz_UTC
+from apt_repo import APTSources, APTRepository
 
 
 # check
@@ -70,6 +71,8 @@ class SourceFactory:
             return Reminder_Source(self.state_manager, config)
         elif sourceType == 'datetime':
             return DateTime_Source(self.state_manager, config)
+        elif sourceType == 'apt':
+            return Apt_Source(self.state_manager, config)
         else:
             raise Exception(f"No such source: {sourceType}")
 
@@ -285,6 +288,59 @@ class DockerHub_Source:
                     if version_re.match(res['name']):
                         data['docker_hub__version']  = res['name']
                         break
+
+        return (trigger, data)
+
+class Apt_Source:
+    def __init__(self, state_manager, config):
+        self.state_manager = state_manager
+
+        self.url = config['url']
+        self.component = config['component']
+        self.dist = config['dist']
+        self.package = config['package']
+        self.repo = APTRepository(self.url, self.dist, [self.component])
+
+        partial_state_key = ','.join([
+            self.url,
+            self.component,
+            self.dist,
+            self.package
+        ])
+        self.state_key = f"apt:({partial_state_key})"
+
+    def enrich(self, data):
+        _, e = self.check(True)
+        for k in e:
+            data[k] = e[k]
+        return data
+
+    def check(self, force=False):
+        version = None
+        for p in self.repo.packages:
+            if p.package == self.package:
+                version = p.version
+                break
+
+        if version is None:
+            raise Exception(f"Unable to find any packages with name {self.package} for source {self.state_key}.")
+
+        data =  {
+            'apt__version': version
+        }
+        key = (version)
+        hsh = int(hashlib.md5(str(key).encode('utf-8')).hexdigest(), 16)
+
+        trigger = True
+
+        if not force:
+            oldState = self.state_manager.getState(self.state_key)
+            if oldState is not None:
+                if oldState['hash'] == hsh:
+                    trigger = False
+            if trigger:
+                newState = { "hash": hsh }
+                self.state_manager.setState(self.state_key, newState)
 
         return (trigger, data)
 

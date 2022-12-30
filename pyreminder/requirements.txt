@@ -3,3 +3,4 @@ requests
 babel
 python-dateutil
 python-crontab
+apt-repo

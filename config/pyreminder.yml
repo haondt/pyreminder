@@ -13,3 +13,16 @@ checks:
       meta:
         plex_url: ${PYREMINDER_PLEX_URL}
       period: 1d
+  - sonarr-apt:
+      source:
+        type: apt
+        url: https://apt.sonarr.tv/debian
+        component: main
+        dist: jessie
+        package: sonarr
+      destinations:
+        - type: discord
+          webhookURL: ${PYREMINDER_DISCORD_WEBHOOK_URL}
+          template: "Version $apt__version of sonarr has been released."
+      period: 30s
+      debug: true
