@@ -4,7 +4,7 @@
 [![GitHub release (latest by date)](https://img.shields.io/github/v/release/haondt/pyreminder)](https://github.com/haondt/pyreminder/releases/latest)
 
 
-Pyreminder is a dead-simple tool for checking statuses and sending notifications. Inspired by [Kibitzr](https://kibitzr.github.io/) but meant to be simpler. Pyreminder is configured with a single yaml file:
+Pyreminder is a minimal tool for checking statuses and sending notifications. Inspired by [Kibitzr](https://kibitzr.github.io/) but meant to be simpler. Pyreminder is configured with a single yaml file:
 ```yaml
 checks:
   - pyreminder:
