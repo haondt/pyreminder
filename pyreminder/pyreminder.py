@@ -73,6 +73,8 @@ class SourceFactory:
             return DateTime_Source(self.state_manager, config)
         elif sourceType == 'apt':
             return Apt_Source(self.state_manager, config)
+        elif sourceType == 'get-request':
+            return GetRequest_Source(self.state_manager, config)
         else:
             raise Exception(f"No such source: {sourceType}")
 
@@ -344,6 +346,75 @@ class Apt_Source:
 
         return (trigger, data)
 
+class GetRequest_Source:
+    def __init__(self, state_manager, config):
+        self.state_manager = state_manager
+
+        self.url = config['url']
+        self.parser = config['parser']
+        self.parse_key = config['parseKey']
+        assert self.parser in ['json', 'regex']
+
+        partial_state_key = ','.join([
+            self.url,
+            self.parser,
+            self.parse_key
+        ])
+        self.state_key = f"get-request:({partial_state_key})"
+
+    def enrich(self, data):
+        _, e = self.check(True)
+        for k in e:
+            data[k] = e[k]
+        return data
+
+    def check(self, force=False):
+        text = requests.get(self.url).text
+        if self.parser == 'json':
+            j = json.loads(text)
+            for part in self.parse_key.split('.'):
+                if '[' in part:
+                    key, remaining = part.split('[', 1)
+                    if len(key) > 0:
+                        j = j[key]
+                    remaining = f'[{remaining}'
+                    while len(remaining) > 0:
+                        index, remaining = remaining.split(']', 1)
+                        index = int(index[1:])
+                        j = j[index]
+                else:
+                    j = j[part]
+            text = j
+        elif self.parser == 'regex':
+            matches = re.search(self.parse_key, text)
+            if matches:
+                text = matches.group()
+            else:
+                raise Exception(f"Unable to match regex {self.parse_key}")
+        else:
+            raise Exception(f"Unsupported parser: {self.parser}")
+
+        key = (text,)
+        hsh = int(hashlib.md5(str(key).encode('utf-8')).hexdigest(), 16)
+
+        data =  {
+            "get_request__text": text,
+        }
+
+        if force:
+            return (True, data)
+
+        oldState = self.state_manager.getState(self.state_key)
+        if oldState is not None:
+            if oldState['hash'] == hsh:
+                return (False, None)
+
+        newState = {
+            "hash": hsh
+        }
+        self.state_manager.setState(self.state_key, newState)
+        return (True, data)
+
 # destinations
 class Console_Destination:
     def __init__(self, template_manager, config):
@@ -431,10 +502,10 @@ class ConfigLoader:
 
 
 # do work
-data_dir = "/data"
-config_file = "/config/pyreminder.yml"
+CONFIG_FILE = os.environ.get('PYREMINDER_CONFIG_FILE') or '/config/pyreminder.yml'
+DATA_DIR = os.environ.get('PYREMINDER_DATA_DIR') or '/data'
 
-configLoader = ConfigLoader(config_file)
-scheduler = Scheduler(data_dir, configLoader.loadConfig())
+configLoader = ConfigLoader(CONFIG_FILE)
+scheduler = Scheduler(DATA_DIR, configLoader.loadConfig())
 
 scheduler.run()

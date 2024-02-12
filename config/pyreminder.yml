@@ -1,17 +1,13 @@
 checks:
   - plex:
       source:
-        type: docker-hub
-        namespace: linuxserver
-        repository: plex
-        tag: latest
+        type: get-request
+        url: https://plex.tv/api/downloads/5.json
+        parser: json
+        parseKey: computer.Linux.version
       destinations:
-        - type: discord
-          webhookURL: ${PYREMINDER_DISCORD_WEBHOOK_URL}
-          color: 1ABC9C
-          template: "New version of Plex pushed ${docker_hub__last_updated}. Get it [here](${meta__plex_url})"
-      meta:
-        plex_url: ${PYREMINDER_PLEX_URL}
+        - type: console
+          template: "New version of Plex released: ${get_request__text}"
       period: 1d
   - sonarr-apt:
       source:
