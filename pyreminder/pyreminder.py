@@ -3,12 +3,16 @@ from datetime import datetime, timedelta
 from babel.dates import format_timedelta, format_time, format_datetime, get_timezone
 from babel.dates import UTC as tz_UTC
 from apt_repo import APTSources, APTRepository
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 # check
 class Check:
     def __init__(self, name, data, sourceFactory, destinationFactory):
         self.name = name
+        self.logger = logging.getLogger(self.name)
         self.meta = {}
         if 'meta' in data:
             self.meta = data['meta']
@@ -42,7 +46,9 @@ class Check:
         return data
 
     def check(self):
+        self.logger.info('Running check...')
         result, data = self.source.check(self.debug)
+        self.logger.info(f'Got result {result} with data {json.dumps(data)}')
         if result:
             data = self._enrich(data)
             for destination in self.destinations:
@@ -505,7 +511,9 @@ class ConfigLoader:
 CONFIG_FILE = os.environ.get('PYREMINDER_CONFIG_FILE') or '/config/pyreminder.yml'
 DATA_DIR = os.environ.get('PYREMINDER_DATA_DIR') or '/data'
 
+logger.info('Loading config...')
 configLoader = ConfigLoader(CONFIG_FILE)
 scheduler = Scheduler(DATA_DIR, configLoader.loadConfig())
 
+logger.info('Starting scheduler...')
 scheduler.run()
