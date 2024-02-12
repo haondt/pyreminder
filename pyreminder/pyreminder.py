@@ -5,6 +5,7 @@ from babel.dates import UTC as tz_UTC
 from apt_repo import APTSources, APTRepository
 import logging
 
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
