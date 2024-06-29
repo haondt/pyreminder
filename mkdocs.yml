@@ -1,0 +1,30 @@
+site_name: pyreminder
+
+nav:
+  - Home: index.md
+  - Installation: installation.md
+  - Configuration:
+    - The Basics: configuration/basics.md
+    - Checks: configuration/checks.md
+    - Sources: configuration/sources.md
+    - Enrichments and Templates: configuration/enrichments_and_templates.md
+    - Destinations: configuration/destinations.md
+    - Environment Variables: configuration/environment_variables.md
+
+theme:
+  name: material
+  palette:
+    scheme: slate
+
+plugins:
+  - search
+
+markdown_extensions: 
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+
