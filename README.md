@@ -21,4 +21,4 @@ checks:
 ```
 ![image](./discord.png)
 
-Check the [docs](https://haondt.gitlab.io/docs/pyreminder/) to get started.
+Check the [docs](https://docs.haondt.dev/pyreminder/) to get started.
