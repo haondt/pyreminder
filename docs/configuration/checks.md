@@ -19,6 +19,7 @@ checks:
 ```
 
 `source`, `destination` and `period` are configured to establish how the check will proceed and are required. The following fields are optional
+
 - `meta`, `enrichments`: see [Enrichments and Templates](../enrichments_and_templates)
 - `debug`: if set to true, the check will always fire
 

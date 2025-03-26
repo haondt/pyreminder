@@ -41,6 +41,7 @@ When rendering the template, you can use variables to dynamically set the output
 ### Default variables
 
 These variables are added to every check
+
 - `check__name`: the name of the check
 
 ### Meta variables
